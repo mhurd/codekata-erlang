@@ -13,7 +13,7 @@
 %% API
 -export([iterate/2]).
 
-% simple iterative solution before mving onto binary chop (add performance metrics?).
+% simple iterative solution before moving onto binary chop (add performance metrics?).
 iterate(Target, Array) -> iterate(Target, Array, 0).
 iterate(Target, [Target|_], Index) -> Index;
 iterate(Target, [_|T], Index) -> iterate(Target, T, Index + 1);
