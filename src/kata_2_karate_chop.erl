@@ -13,6 +13,8 @@
 %% API
 -export([iterate/2]).
 
+% NOTE: only implentaing one technique here as its apparent that Erlang is not perfectly suited to Array manipulation.
+
 % simple iterative solution before moving onto binary chop (add performance metrics?).
 iterate(Target, Array) -> iterate(Target, array:to_list(Array), 0).
 iterate(Target, [Target|_], Index) -> Index;
@@ -38,23 +40,20 @@ halfway_between(N1, N2) ->
   end.
 
 -ifdef(EUNIT).
-
-%halfway_between_test() ->
-%  [
-%    ?assert(1 == halfway_between(1, 2)),
-%    ?assert(0 == halfway_between(0, 0)),
-%    ?assert(5 == halfway_between(1, 10)),
-%    ?assert(4 == halfway_between(3, 5)),
-%    ?assert(1 == halfway_between(1, 2)),
-%    ?assert(1 == halfway_between(0, 3)),
-%    ?assert(2 == halfway_between(1, 3)),
-%    ?assert(50== halfway_between(1, 100))
-%  ].
-
+halfway_between_test() ->
+  [
+    ?assert(1 == halfway_between(1, 2)),
+    ?assert(0 == halfway_between(0, 0)),
+    ?assert(5 == halfway_between(1, 10)),
+    ?assert(4 == halfway_between(3, 5)),
+    ?assert(1 == halfway_between(1, 2)),
+    ?assert(1 == halfway_between(0, 3)),
+    ?assert(2 == halfway_between(1, 3)),
+    ?assert(50== halfway_between(1, 100))
+  ].
 -endif.
 
 chop1(Target, Array) ->
-  io:format("Searching for: ~p in: ~p~n", [Target, Array]),
   case array:size(Array) of
     0 -> -1;
     _ -> chop1(Target, Array, 0, array:size(Array), -1, halfway_between(0, array:size(Array)))
@@ -71,7 +70,9 @@ chop1(Target, Array, LowerBound, UpperBound, _LastIndex, Index) ->
              end
   end.
 
+-ifdef(EUNIT).
 chop1_test() -> assert(fun chop1/2).
+-endif.
 
 % Apply the supplied function to the test data and assert
 % the correct result.
