@@ -18,7 +18,13 @@ read(Filename) ->
 
 process({ok, IoDevice}) ->
   ?debugMsg("Opened file OK"),
-  process_line(IoDevice);
+  % discard the header line
+  case file:read_line(IoDevice) of
+    {ok, _Data} ->
+      process_data(IoDevice);
+    {error, Reason} -> ?debugFmt("Read line failed: ~p~n", [Reason]);
+    eof -> ?debugMsg("End of file reached.")
+  end;
 process({error, Reason}) ->
   ?debugFmt("Read file failed: ~p~n", [Reason]).
 
@@ -50,11 +56,36 @@ range_test() ->
   ?assertEqual(4, range([7,3,6,6]))].
 -endif.
 
-process_line(IoDevice) ->
+get_col_and_range(ColIndex, RangeIndexes, Data) when (ColIndex > 0) and (ColIndex =< length(Data)) ->
+  ColVal = lists:nth(ColIndex, Data),
+  Range = range(lists:map(
+    fun(N) ->
+      case N of
+        0 -> erlang:error(invalid_index);
+        _ -> lists:nth(N, Data)
+      end
+    end
+    , RangeIndexes)),
+  {ColVal, Range};
+get_col_and_range(ColIndex, _RangeIndexes, _Data) when ColIndex =< 0 ->
+  erlang:error(invalid_index);
+get_col_and_range(ColIndex, _RangeIndexes, Data) when ColIndex > length(Data) ->
+  erlang:error(invalid_index).
+
+  -ifdef(EUNIT).
+get_col_and_range_test() ->
+  [?assertEqual({1, 6}, get_col_and_range(1, [1,4], [1,3,6,7])),
+    ?assertEqual({6, 60}, get_col_and_range(3, [5,6], [1,3,6,7,-4,56,10])),
+    ?assertException(error, invalid_index, get_col_and_range(0, [1,4], [1,3,6,7])),
+    ?assertException(error, invalid_index, get_col_and_range(1, [0,4], [1,3,6,7]))].
+-endif.
+
+process_data(IoDevice) ->
   case file:read_line(IoDevice) of
     {ok, Data} ->
-      ?debugFmt("~p", [string:tokens(Data, " ")]),
-      process_line(IoDevice);
+      Tokens = string:tokens(Data, " "),
+      ?debugFmt("Tokens: ~p", [Tokens]),
+      process_data(IoDevice);
     {error, Reason} -> ?debugFmt("Read line failed: ~p~n", [Reason]);
     eof -> ?debugMsg("End of file reached.")
   end.
